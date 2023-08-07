@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "pyspark-confluent-avro"
+version = "0.1.0"
+description = ""
+authors = ["Alexandre Candeias <candeiasalexandre@farfetch.com>"]
+readme = "README.md"
+packages = [{ include = "pyspark_confluent_avro" }]
+
+[tool.poetry.dependencies]
+python = "3.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
