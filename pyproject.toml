@@ -2,13 +2,19 @@
 name = "pyspark-confluent-avro"
 version = "0.1.0"
 description = ""
-authors = ["Alexandre Candeias <candeiasalexandre@farfetch.com>"]
+authors = ["Alexandre Candeias <candeiasalexandre@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "pyspark_confluent_avro" }]
 
 [tool.poetry.dependencies]
-python = "3.8"
+python = "~3.8"
+pyspark = "3.1.2"
+confluent-kafka = "2.2.0"
+requests = "2.31.0"
 
+
+[tool.poetry.group.dev.dependencies]
+pytest = "7.4.0"
 
 [build-system]
 requires = ["poetry-core"]
