@@ -1,4 +1,5 @@
 from typing import Any, Dict
+
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from pyspark_confluent_avro.schema_registry import get_schema_dict, registry_avro_schema
