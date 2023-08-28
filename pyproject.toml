@@ -11,10 +11,15 @@ python = "~3.8"
 pyspark = "3.1.2"
 confluent-kafka = "2.2.0"
 requests = "2.31.0"
+pandas = "1.2.4"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "7.4.0"
+pytest-repeat = "0.9.1"
+black = "23.7.0"
+ruff = "0.0.286"
+mypy = "1.5.1"
 
 [build-system]
 requires = ["poetry-core"]
