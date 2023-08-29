@@ -67,7 +67,7 @@ def test_write_spark_read_confluent(
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
-        "group.id": "test-tailor",
+        "group.id": "pytest-tests",
         "auto.offset.reset": "earliest",
     }
 
@@ -108,7 +108,7 @@ def test_write_confluent_read_spark(
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
-        "group.id": "test-tailor",
+        "group.id": "pytest-tests",
         "auto.offset.reset": "earliest",
     }
 
@@ -134,3 +134,53 @@ def test_write_confluent_read_spark(
     field_1_original_messages = set([x["field_1"] for x in example_messages])
 
     assert field_1_original_messages.intersection(field_1_read_messages) == set()
+
+
+from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
+
+
+def test_write_confluent_read_spark_custom(
+    kafka_topic: KafkaOptions,
+    schema_registry_client: SchemaRegistryClient,
+    example_schema: Dict[str, Any],
+    example_messages: List[Dict[str, Any]],
+    spark_session: SparkSession,
+    schema_registry_config: Dict[str, str],
+) -> None:
+    """ """
+    kafka_conf = {
+        "bootstrap.servers": kafka_topic.host,
+        "compression.type": kafka_topic.compression_type,
+        "group.id": "pytest-tests",
+        "auto.offset.reset": "earliest",
+    }
+
+    schema_json = json.dumps(example_schema)
+
+    write_avro_kafka(
+        example_messages,
+        kafka_conf,
+        kafka_topic.topic,
+        schema_registry_client,
+        schema_json,
+    )
+
+    df_messages_read = read_kafka(spark_session, kafka_topic)
+    pdf_messages_read = df_messages_read.withColumn(
+        "message",
+        custom_from_avro(
+            df_messages_read["value"],
+            schema_json,
+            {"schema.registry.url": schema_registry_config["url"]},
+        ),
+    ).toPandas()
+
+    field_1_read_messages = set(
+        [x["field_1"] for x in pdf_messages_read["message"].to_list()]
+    )
+    field_1_original_messages = set([x["field_1"] for x in example_messages])
+
+    assert (
+        field_1_original_messages.intersection(field_1_read_messages)
+        == field_1_original_messages
+    )

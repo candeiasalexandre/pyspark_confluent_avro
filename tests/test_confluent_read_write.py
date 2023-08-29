@@ -34,7 +34,7 @@ def test_write_read(
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
-        "group.id": "test-tailor",
+        "group.id": "pytest-tests",
         "auto.offset.reset": "earliest",
     }
 
@@ -53,4 +53,10 @@ def test_write_read(
         json.dumps(example_schema),
     )
 
+    field_1_read_messages = set(
+        [x["field_1"] for x in read_messages]
+    )
+    field_1_original_messages = set([x["field_1"] for x in example_messages])
+
     assert len(read_messages) == len(example_messages)
+    assert field_1_read_messages == field_1_original_messages
