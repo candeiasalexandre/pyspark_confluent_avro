@@ -1,7 +1,8 @@
 from typing import Any, Dict, List
+
 from confluent_kafka import Consumer, KafkaException, Producer
-from confluent_kafka.schema_registry.avro import AvroDeserializer, AvroSerializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.avro import AvroDeserializer, AvroSerializer
 from confluent_kafka.serialization import MessageField, SerializationContext
 
 
@@ -23,7 +24,7 @@ def read_avro_kafka(
     messages = []
     timeout_count = 0
     try:
-        while timeout_count <= 5:
+        while timeout_count <= 5:  # noqa: PLR2004
             message = consumer.poll(timeout=timeout)
             if message is None:
                 timeout_count += 1
@@ -50,7 +51,6 @@ def write_avro_kafka(
     schema_str: str,
     timeout: int = 1,
 ) -> None:
-
     producer = Producer(conf)
     avro_serializer = AvroSerializer(schema_registry_client, schema_str=schema_str)
 

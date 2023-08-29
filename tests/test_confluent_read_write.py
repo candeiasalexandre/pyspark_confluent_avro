@@ -1,12 +1,12 @@
 import json
 from typing import Any, Dict, List
 
-from confluent_kafka.schema_registry import SchemaRegistryClient
 import pytest
+from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from pyspark_confluent_avro.confluent_read_write import (
-    write_avro_kafka,
     read_avro_kafka,
+    write_avro_kafka,
 )
 from pyspark_confluent_avro.spark_kafka import KafkaOptions
 
@@ -31,7 +31,6 @@ def test_write_read(
     example_schema: Dict[str, Any],
     example_messages: List[Dict[str, Any]],
 ) -> None:
-
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
