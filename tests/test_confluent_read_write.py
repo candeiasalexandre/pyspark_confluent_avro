@@ -53,9 +53,7 @@ def test_write_read(
         json.dumps(example_schema),
     )
 
-    field_1_read_messages = set(
-        [x["field_1"] for x in read_messages]
-    )
+    field_1_read_messages = set([x["field_1"] for x in read_messages])
     field_1_original_messages = set([x["field_1"] for x in example_messages])
 
     assert len(read_messages) == len(example_messages)

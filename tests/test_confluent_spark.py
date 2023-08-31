@@ -14,6 +14,8 @@ from pyspark_confluent_avro.confluent_read_write import (
     read_avro_kafka,
     write_avro_kafka,
 )
+from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
+from pyspark_confluent_avro.spark_avro_serde import from_avro_abris_config
 from pyspark_confluent_avro.spark_kafka import KafkaOptions, read_kafka, write_kafka
 
 
@@ -136,10 +138,6 @@ def test_write_confluent_read_spark(
     assert field_1_original_messages.intersection(field_1_read_messages) == set()
 
 
-from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
-from pyspark_confluent_avro.spark_avro_serde import from_avro_abris_config
-
-
 def test_write_confluent_read_spark_custom(
     kafka_topic: KafkaOptions,
     schema_registry_client: SchemaRegistryClient,
@@ -168,9 +166,7 @@ def test_write_confluent_read_spark_custom(
 
     df_messages_read = read_kafka(spark_session, kafka_topic)
     abris_config = from_avro_abris_config(
-        {"schema.registry.url": schema_registry_config["url"]},
-        kafka_topic.topic,
-        False
+        {"schema.registry.url": schema_registry_config["url"]}, kafka_topic.topic, False
     )
     pdf_messages_read = df_messages_read.withColumn(
         "message",
