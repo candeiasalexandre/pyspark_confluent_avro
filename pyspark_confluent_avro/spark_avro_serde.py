@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from pyspark import SparkContext
 from pyspark.sql.column import (  # type: ignore
@@ -64,7 +64,10 @@ def to_avro(col: Column, config: AbrisToAvroConfig) -> Column:
 
 
 def to_avro_abris_config(
-    config_map: Dict[str, str], topic: str, is_key: bool
+    config_map: Dict[str, str],
+    topic: str,
+    is_key: bool,
+    schema_json: Optional[str] = None,
 ) -> AbrisToAvroConfig:
     """
     Args:
@@ -79,9 +82,17 @@ def to_avro_abris_config(
     jvm_gateway = SparkContext._active_spark_context._gateway.jvm  # type: ignore
     scala_map = jvm_gateway.PythonUtils.toScalaMap(config_map)
 
-    return AbrisToAvroConfig(
-        jvm_gateway.za.co.absa.abris.config.AbrisConfig.toConfluentAvro()
-        .downloadSchemaByLatestVersion()
-        .andTopicNameStrategy(topic, is_key)
-        .usingSchemaRegistry(scala_map)
-    )
+    if schema_json is None:
+        return AbrisToAvroConfig(
+            jvm_gateway.za.co.absa.abris.config.AbrisConfig.toConfluentAvro()
+            .downloadSchemaByLatestVersion()
+            .andTopicNameStrategy(topic, is_key)
+            .usingSchemaRegistry(scala_map)
+        )
+    else:
+        return AbrisToAvroConfig(
+            jvm_gateway.za.co.absa.abris.config.AbrisConfig.toConfluentAvro()
+            .provideAndRegisterSchema(schema_json)
+            .usingTopicNameStrategy(topic, is_key)
+            .usingSchemaRegistry(scala_map)
+        )

@@ -15,7 +15,11 @@ from pyspark_confluent_avro.confluent_read_write import (
     write_avro_kafka,
 )
 from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
-from pyspark_confluent_avro.spark_avro_serde import from_avro_abris_config
+from pyspark_confluent_avro.spark_avro_serde import (
+    from_avro_abris_config,
+    to_avro_abris_config,
+)
+from pyspark_confluent_avro.spark_avro_serde import to_avro as custom_to_avro
 from pyspark_confluent_avro.spark_kafka import KafkaOptions, read_kafka, write_kafka
 
 
@@ -39,7 +43,7 @@ def example_data(spark_session: SparkSession) -> DataFrame:
     pdf = pd.DataFrame(
         {
             "id": list(range(num_rows)),
-            "field_1": [f"field_1{value}" for value in range(num_rows)],
+            "field_1": [f"field_1_{value}" for value in range(num_rows)],
             "field_2": list(range(num_rows)),
             "field_3": [
                 [i for i in range(10, 10 + row_number)]
@@ -146,14 +150,12 @@ def test_write_confluent_read_spark_custom(
     spark_session: SparkSession,
     schema_registry_config: Dict[str, str],
 ) -> None:
-    """ """
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
         "group.id": "pytest-tests",
         "auto.offset.reset": "earliest",
     }
-
     schema_json = json.dumps(example_schema)
 
     write_avro_kafka(
@@ -182,3 +184,45 @@ def test_write_confluent_read_spark_custom(
         field_1_original_messages.intersection(field_1_read_messages)
         == field_1_original_messages
     )
+
+
+def test_write_spark_custom_read_confluent(
+    kafka_topic: KafkaOptions,
+    schema_registry_client: SchemaRegistryClient,
+    example_schema: Dict[str, Any],
+    example_data: DataFrame,
+    schema_registry_config: Dict[str, str],
+    example_messages: List[Dict[str, Any]],
+) -> None:
+    schema_json = json.dumps(example_schema)
+    kafka_conf = {
+        "bootstrap.servers": kafka_topic.host,
+        "compression.type": kafka_topic.compression_type,
+        "group.id": "pytest-tests",
+        "auto.offset.reset": "earliest",
+    }
+
+    abris_config = to_avro_abris_config(
+        {"schema.registry.url": schema_registry_config["url"]},
+        kafka_topic.topic,
+        False,
+        schema_json=schema_json,
+    )
+    df_message_avro = example_data.withColumn(
+        "message_avro",
+        custom_to_avro(example_data["message"], abris_config),
+    )
+    write_kafka(df_message_avro, "message_avro", kafka_topic)
+
+    read_messages = read_avro_kafka(
+        kafka_conf,
+        kafka_topic.topic,
+        schema_registry_client,
+        schema_json,
+    )
+
+    field_1_read_messages = set([x["field_1"] for x in read_messages])
+    field_1_original_messages = set([x["field_1"] for x in example_messages])
+
+    assert len(read_messages) == len(example_messages)
+    assert field_1_read_messages == field_1_original_messages
