@@ -137,6 +137,7 @@ def test_write_confluent_read_spark(
 
 
 from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
+from pyspark_confluent_avro.spark_avro_serde import from_avro_abris_config
 
 
 def test_write_confluent_read_spark_custom(
@@ -166,13 +167,14 @@ def test_write_confluent_read_spark_custom(
     )
 
     df_messages_read = read_kafka(spark_session, kafka_topic)
+    abris_config = from_avro_abris_config(
+        {"schema.registry.url": schema_registry_config["url"]},
+        kafka_topic.topic,
+        False
+    )
     pdf_messages_read = df_messages_read.withColumn(
         "message",
-        custom_from_avro(
-            df_messages_read["value"],
-            schema_json,
-            {"schema.registry.url": schema_registry_config["url"]},
-        ),
+        custom_from_avro(df_messages_read["value"], abris_config),
     ).toPandas()
 
     field_1_read_messages = set(

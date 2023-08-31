@@ -2,50 +2,62 @@ from typing import Dict
 from pyspark import SparkContext
 from pyspark.sql.column import Column, _to_java_column
 
+# taken from https://github.com/AbsaOSS/ABRiS/blob/master/documentation/python-documentation.md
 
-def to_avro(col: Column, schema_str: str, schema_id: int) -> Column:
-    """
-    Serializes rows in column to Avro in confluent format
-    """
+
+def from_avro(col: Column, config):
     jvm_gateway = SparkContext._active_spark_context._gateway.jvm
     abris_avro = jvm_gateway.za.co.absa.abris.avro
-    config = _create_to_avro_abris_config(schema_str, schema_id)
-    return Column(abris_avro.functions.to_avro(_to_java_column(col), config))
 
-
-def from_avro(
-    col: Column, schema_str: str, schema_registry_config: Dict[str, str]
-) -> Column:
-    """
-    Deserializes rows in column in Avro Confluent format to a struct
-    """
-    jvm_gateway = SparkContext._active_spark_context._gateway.jvm
-    abris_avro = jvm_gateway.za.co.absa.abris.avro
-    config = _create_from_avro_abris_config(schema_str, schema_registry_config)
     return Column(abris_avro.functions.from_avro(_to_java_column(col), config))
 
 
-def _create_to_avro_abris_config(schema_json: str, schema_id: int):
+def from_avro_abris_config(config_map: Dict[str, str], topic: str, is_key: bool):
+    """
+    Args:
+        config_map (Dict[str, str]): configuration map to pass to deserializer,
+            ex: {'schema.registry.url': 'http://localhost:8081'}
+        topic (str): kafka topic name
+        is_key (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        _type_: FromAvroConfig
+    """
     jvm_gateway = SparkContext._active_spark_context._gateway.jvm
-    avro_config = (
-        jvm_gateway.za.co.absa.abris.config.ToAvroConfig(
-            jvm_gateway.PythonUtils.toScalaMap({})
-        )
-        .withSchema(schema_json)
-        .withSchemaId(schema_id)
+    scala_map = jvm_gateway.PythonUtils.toScalaMap(config_map)
+
+    return (
+        jvm_gateway.za.co.absa.abris.config.AbrisConfig.fromConfluentAvro()
+        .downloadReaderSchemaByLatestVersion()
+        .andTopicNameStrategy(topic, is_key)
+        .usingSchemaRegistry(scala_map)
     )
-    return avro_config
 
 
-def _create_from_avro_abris_config(schema_json, schema_registry_config: Dict[str, str]):
+def to_avro(col: Column, config):
     jvm_gateway = SparkContext._active_spark_context._gateway.jvm
-    avro_config = (
-        jvm_gateway.za.co.absa.abris.config.FromAvroConfig(
-            jvm_gateway.PythonUtils.toScalaMap({}), jvm_gateway.scala.Option.apply(None)
-        )
-        .withReaderSchema(schema_json)
-        .withSchemaRegistryConfig(
-            jvm_gateway.PythonUtils.toScalaMap(schema_registry_config)
-        )
+    abris_avro = jvm_gateway.za.co.absa.abris.avro
+
+    return Column(abris_avro.functions.to_avro(_to_java_column(col), config))
+
+
+def to_avro_abris_config(config_map: Dict[str, str], topic: str, is_key: bool):
+    """
+    Args:
+        config_map (Dict[str, str]): configuration map to pass to deserializer,
+            ex: {'schema.registry.url': 'http://localhost:8081'}
+        topic (str): kafka topic name
+        is_key (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        _type_: ToAvroConfig
+    """
+    jvm_gateway = SparkContext._active_spark_context._gateway.jvm
+    scala_map = jvm_gateway.PythonUtils.toScalaMap(config_map)
+
+    return (
+        jvm_gateway.za.co.absa.abris.config.AbrisConfig.toConfluentAvro()
+        .downloadSchemaByLatestVersion()
+        .andTopicNameStrategy(topic, is_key)
+        .usingSchemaRegistry(scala_map)
     )
-    return avro_config
