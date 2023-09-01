@@ -150,6 +150,10 @@ def test_write_confluent_read_spark_custom(
     spark_session: SparkSession,
     schema_registry_config: Dict[str, str],
 ) -> None:
+    """
+    Test that shows correctness if we use the Abris package to read a confluent Avro serialized message.
+    IF we use Abris from_avro, we get the correct data when reading.
+    """
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
         "compression.type": kafka_topic.compression_type,
@@ -194,6 +198,11 @@ def test_write_spark_custom_read_confluent(
     schema_registry_config: Dict[str, str],
     example_messages: List[Dict[str, Any]],
 ) -> None:
+    """
+    Test that shows correctness if we use the Abris package to write an Avro serialized message.
+    If we serialize the messages with Abris, when we read from kafka using kafka_confluent we
+    get the right data.
+    """
     schema_json = json.dumps(example_schema)
     kafka_conf = {
         "bootstrap.servers": kafka_topic.host,
@@ -202,6 +211,8 @@ def test_write_spark_custom_read_confluent(
         "auto.offset.reset": "earliest",
     }
 
+    # this will register the schema automatically
+    # check https://github.com/AbsaOSS/ABRiS
     abris_config = to_avro_abris_config(
         {"schema.registry.url": schema_registry_config["url"]},
         kafka_topic.topic,
