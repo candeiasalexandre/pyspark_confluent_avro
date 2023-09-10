@@ -5,8 +5,8 @@ import pytest
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from pyspark_confluent_avro.confluent_read_write import (
-    read_avro_kafka,
-    write_avro_kafka,
+    read_avro_confluent_kafka,
+    write_avro_confluent_kafka,
 )
 from pyspark_confluent_avro.spark_kafka import KafkaOptions
 
@@ -38,7 +38,7 @@ def test_write_read(
         "auto.offset.reset": "earliest",
     }
 
-    write_avro_kafka(
+    write_avro_confluent_kafka(
         example_messages,
         kafka_conf,
         kafka_topic.topic,
@@ -46,7 +46,7 @@ def test_write_read(
         json.dumps(example_schema),
     )
 
-    read_messages = read_avro_kafka(
+    read_messages = read_avro_confluent_kafka(
         kafka_conf,
         kafka_topic.topic,
         schema_registry_client,

@@ -11,8 +11,8 @@ from pyspark.sql.avro.functions import from_avro as spark_from_avro
 from pyspark.sql.avro.functions import to_avro as spark_to_avro
 
 from pyspark_confluent_avro.confluent_read_write import (
-    read_avro_kafka,
-    write_avro_kafka,
+    read_avro_confluent_kafka,
+    write_avro_confluent_kafka,
 )
 from pyspark_confluent_avro.spark_avro_serde import from_avro as custom_from_avro
 from pyspark_confluent_avro.spark_avro_serde import (
@@ -85,7 +85,7 @@ def test_write_spark_read_confluent(
     write_kafka(df_message_avro, "message_avro", kafka_topic)
 
     with pytest.raises(SerializationError) as e_info:
-        _ = read_avro_kafka(
+        _ = read_avro_confluent_kafka(
             kafka_conf,
             kafka_topic.topic,
             schema_registry_client,
@@ -120,7 +120,7 @@ def test_write_confluent_read_spark(
 
     schema_json = json.dumps(example_schema)
 
-    write_avro_kafka(
+    write_avro_confluent_kafka(
         example_messages,
         kafka_conf,
         kafka_topic.topic,
@@ -162,7 +162,7 @@ def test_write_confluent_read_spark_custom(
     }
     schema_json = json.dumps(example_schema)
 
-    write_avro_kafka(
+    write_avro_confluent_kafka(
         example_messages,
         kafka_conf,
         kafka_topic.topic,
@@ -225,7 +225,7 @@ def test_write_spark_custom_read_confluent(
     )
     write_kafka(df_message_avro, "message_avro", kafka_topic)
 
-    read_messages = read_avro_kafka(
+    read_messages = read_avro_confluent_kafka(
         kafka_conf,
         kafka_topic.topic,
         schema_registry_client,

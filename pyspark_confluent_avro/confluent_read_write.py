@@ -6,7 +6,7 @@ from confluent_kafka.schema_registry.avro import AvroDeserializer, AvroSerialize
 from confluent_kafka.serialization import MessageField, SerializationContext
 
 
-def read_avro_kafka(
+def read_avro_confluent_kafka(
     conf: Dict[str, str],
     topic_name: str,
     schema_registry_client: SchemaRegistryClient,
@@ -43,7 +43,7 @@ def read_avro_kafka(
     return messages
 
 
-def write_avro_kafka(
+def write_avro_confluent_kafka(
     messages: List[Dict[str, Any]],
     conf: Dict[str, Any],
     topic_name: str,
