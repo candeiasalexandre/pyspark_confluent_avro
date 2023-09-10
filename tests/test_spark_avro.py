@@ -8,7 +8,11 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.avro.functions import from_avro as spark_from_avro
 from pyspark.sql.avro.functions import to_avro as spark_to_avro
 
-from pyspark_confluent_avro.spark_kafka import KafkaOptions, read_kafka, write_kafka
+from pyspark_confluent_avro.spark_kafka import (
+    KafkaOptions,
+    read_spark_kafka,
+    write_spark_kafka,
+)
 
 
 @pytest.fixture()
@@ -44,9 +48,9 @@ def test_write_spark_avro(
         spark_to_avro(example_data["message"], schema_json),
     )
 
-    write_kafka(df_message_avro, "message_avro", kafka_topic)
+    write_spark_kafka(df_message_avro, "message_avro", kafka_topic)
 
-    df_messages_read = read_kafka(spark_session, kafka_topic)
+    df_messages_read = read_spark_kafka(spark_session, kafka_topic)
     df_messages_read = df_messages_read.withColumn(
         "message",
         spark_from_avro(df_messages_read["value"], schema_json),

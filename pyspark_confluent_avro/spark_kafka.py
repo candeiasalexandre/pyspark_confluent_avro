@@ -18,12 +18,12 @@ class KafkaOptions:
         }
 
 
-def write_kafka(df: DataFrame, column: str, options: KafkaOptions) -> None:
+def write_spark_kafka(df: DataFrame, column: str, options: KafkaOptions) -> None:
     _df = df.withColumnRenamed(column, "value")
     _df = _df.select("value")
     _df.write.format("kafka").options(**options.to_writer_options()).save()
 
 
-def read_kafka(spark: SparkSession, options: KafkaOptions) -> DataFrame:
+def read_spark_kafka(spark: SparkSession, options: KafkaOptions) -> DataFrame:
     _options = {**options.to_writer_options(), "subscribe": options.topic}
     return spark.read.format("kafka").options(**_options).load()

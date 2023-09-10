@@ -20,7 +20,11 @@ from pyspark_confluent_avro.spark_avro_serde import (
     to_avro_abris_config,
 )
 from pyspark_confluent_avro.spark_avro_serde import to_avro as custom_to_avro
-from pyspark_confluent_avro.spark_kafka import KafkaOptions, read_kafka, write_kafka
+from pyspark_confluent_avro.spark_kafka import (
+    KafkaOptions,
+    read_spark_kafka,
+    write_spark_kafka,
+)
 
 
 @pytest.fixture()
@@ -82,7 +86,7 @@ def test_write_spark_read_confluent(
         spark_to_avro(example_data["message"], schema_json),
     )
 
-    write_kafka(df_message_avro, "message_avro", kafka_topic)
+    write_spark_kafka(df_message_avro, "message_avro", kafka_topic)
 
     with pytest.raises(SerializationError) as e_info:
         _ = read_avro_confluent_kafka(
@@ -128,7 +132,7 @@ def test_write_confluent_read_spark(
         schema_json,
     )
 
-    df_messages_read = read_kafka(spark_session, kafka_topic)
+    df_messages_read = read_spark_kafka(spark_session, kafka_topic)
     pdf_messages_read = df_messages_read.withColumn(
         "message",
         spark_from_avro(df_messages_read["value"], schema_json),
@@ -170,7 +174,7 @@ def test_write_confluent_read_spark_custom(
         schema_json,
     )
 
-    df_messages_read = read_kafka(spark_session, kafka_topic)
+    df_messages_read = read_spark_kafka(spark_session, kafka_topic)
     abris_config = from_avro_abris_config(
         {"schema.registry.url": schema_registry_config["url"]}, kafka_topic.topic, False
     )
@@ -223,7 +227,7 @@ def test_write_spark_custom_read_confluent(
         "message_avro",
         custom_to_avro(example_data["message"], abris_config),
     )
-    write_kafka(df_message_avro, "message_avro", kafka_topic)
+    write_spark_kafka(df_message_avro, "message_avro", kafka_topic)
 
     read_messages = read_avro_confluent_kafka(
         kafka_conf,
